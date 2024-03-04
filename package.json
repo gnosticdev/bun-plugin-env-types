@@ -3,8 +3,16 @@
     "description": "A Bun plugin for generating typescript types for environment variables",
     "author": "gnosticdev",
     "version": "1.0.0",
+    "private": false,
+    "license": "MIT",
+    "engines": {
+        "bun": ">=1.0.0",
+        "node": ">=21.0.0"
+    },
     "main": "bun.plugin.ts",
-    "scripts": {},
+    "scripts": {
+        "build": "rm -rf ./dist && tsc"
+    },
     "devDependencies": {
         "@types/bun": "^1.0.8"
     }

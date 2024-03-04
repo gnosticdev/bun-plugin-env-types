@@ -22,6 +22,12 @@ export type PluginOpts = {
 	 * @default - true
 	 */
 	timestamp?: boolean
+	/**
+	 * .env files to ignore
+	 * @default
+	 * - ['.env.example']
+	 */
+	ignore?: string[]
 }
 
 const MOD_LINE = `
@@ -57,7 +63,12 @@ plugin(bunEnvPlugin())
  * ```
  */
 export default function bunEnvPlugin(
-	opts: PluginOpts = { dtsFile: 'env.d.ts', glob: '.env*', timestamp: true },
+	opts: PluginOpts = {
+		dtsFile: 'env.d.ts',
+		glob: '.env*',
+		timestamp: true,
+		ignore: ['.env.example'],
+	},
 ): BunPlugin {
 	return {
 		name: 'bun-plugin-env',
@@ -72,14 +83,9 @@ export default function bunEnvPlugin(
 				return
 			}
 			for await (const file of envFiles) {
-				// dont include these files in the env.d.ts
-				if (
-					file.endsWith('.env.d.ts') ||
-					file.endsWith('.env.example') ||
-					file.endsWith('.env.ts')
-				)
-					continue
+				if (opts.ignore?.includes(path.basename(file))) continue
 				const envContent = await Bun.file(file).text()
+				// filter out comments and empty lines
 				const filtered = envContent
 					.split('\n')
 					.filter((line) => line.trim() !== '' && !line.trim().startsWith('#'))
