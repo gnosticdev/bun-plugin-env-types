@@ -4,25 +4,13 @@ Get autocomplete on those pesky .env files without manual configuration.
 
 ## Overview
 
-I think a lot of people are like me and want to have their environment variables availabe on process.env and Bun.env. Well, I figure why not use the Bun plugin system to make a plugin that does this on the fly.
+I just wanted my environment variables availabe on `process.env` and `Bun.env` without having to do it manually. So, I figure why not use the Bun plugin system to make a plugin that does this on the fly.
 
 ## Installation
 
 ```zsh
-
-git clone https://github.com/@gnosticdev/bun-plugin-env-types
+bun i bun-plugin-env-types
 ```
-
-or...
-
-```zsh
-# bun.plugin.ts
-
-cmd + c
-cmd + v
-```
-
-sorry no time to publish 😂
 
 ## Usage
 
@@ -33,11 +21,23 @@ You have 2 options:
 
 ### Runtime Plugin
 
-Import the plugin to  file in your project and add it to the `bunfig.toml` file.
+[Runtime Plugins](https://bun.sh/docs/runtime/plugins) are cool bc they allow you to run files when other bun processes run. To use it:
+
+1. create a file like `preload.ts`.
+2. import and call the plugin:
+
+```ts
+// ./preload.ts
+import envPlugin from 'bun-plugin-env-types'
+
+envPlugin()
+```
+
+ 3.add the file to the `bunfig.toml` file in the `preload` array:
 
 ```toml
 preload = [
-  "bun.plugin.ts"
+  "./preload.ts"
 ]
 ```
 
@@ -69,8 +69,4 @@ declare namespace NodeJS {
       SECRET_KEY: string
     }
   }
-
-declare module 'bun' {
-    interface Env extends NodeJS.ProcessEnv {}
-}
 ```

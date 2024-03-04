@@ -10,6 +10,13 @@
         "node": ">=21.0.0"
     },
     "main": "bun.plugin.ts",
+    "peerDependencies": {
+        "bun": "^1.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/gnosticdev/bun-plugin-env-types.git"
+    },
     "scripts": {
         "build": "rm -rf ./dist && tsc"
     },

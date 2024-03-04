@@ -1,34 +1,39 @@
-import { plugin, type BunPlugin } from 'bun'
+import { type BunPlugin } from 'bun'
 import path from 'node:path'
 
-export type PluginOpts = {
+export type PluginOptions = {
 	/**
 	 * The .env files to add to the env.d.ts file.
-	 * @default - all .env files in the project
+	 * If not provided, the plugin will search for .env files using the `glob` option.
+	 * _Notes:_ If you provide this option, the `glob` option will be ignored.
+	 * @default undefined
 	 */
 	envFiles?: string[] | string
 	/**
 	 * The name of the env.d.ts file
-	 * @default - 'env.d.ts'
+	 * @default 'env.d.ts'
 	 */
-	dtsFile: string
+	dtsFile?: string
 	/**
-	 * The glob pattern to search for .env files. Overrides `envFiles`
-	 * @default - '.env*'
+	 * The glob pattern to search for .env files
+	 * @default '.env*'
 	 */
-	glob: string
+	glob?: string
 	/**
 	 * Generate a timestamp at the top of the env.d.ts file so you know when each build occurs
-	 * @default - true
+	 * @default true
 	 */
 	timestamp?: boolean
 	/**
 	 * .env files to ignore
 	 * @default
-	 * - ['.env.example']
+	 * ['.env.example']
 	 */
 	ignore?: string[]
 }
+
+type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
+	Pick<PluginOptions, 'envFiles'>
 
 const MOD_LINE = `
 //---------------------------------------------------------------------//
@@ -36,15 +41,13 @@ const MOD_LINE = `
 //---------------------------------------------------------------------//
 `
 
-plugin(bunEnvPlugin())
-
 /**
  * Generate TypeScript definitions for all .env files in the project.
  *
  * Scans the project for .env files using `Bun.glob`, then inserts them into a env.d.ts file under the `NodeJS.ProcessEnv` namespace, and Bun.Env interface.
  *
  * You can add your own custom global types to the env.d.ts file by adding them below the generated type dets.
- * @param opts - the options for the plugin
+ * @param pluginOpts - the options for the plugin
  * @example
  * ```toml
  * # bunfig.toml
@@ -63,39 +66,58 @@ plugin(bunEnvPlugin())
  * ```
  */
 export default function bunEnvPlugin(
-	opts: PluginOpts = {
+	pluginOpts: PluginOptions = {},
+): BunPlugin {
+	const defaults: PluginOptions = {
 		dtsFile: 'env.d.ts',
 		glob: '.env*',
 		timestamp: true,
 		ignore: ['.env.example'],
-	},
-): BunPlugin {
+		envFiles: undefined,
+	}
+	// just in case the user provides an option that is undefined
+	const filteredOptions: PluginOptions = Object.fromEntries(
+		Object.entries(pluginOpts).map(([key, value]) => [
+			key,
+			value === undefined ? defaults[key as keyof PluginOptions] : value,
+		]),
+	)
+	const mergedOpts = { ...defaults, ...filteredOptions } as FullOptions
+
 	return {
-		name: 'bun-plugin-env',
+		name: 'bun-plugin-env-types',
 		setup: async () => {
-			const envGlob = new Bun.Glob(opts.glob)
+			const envGlob = new Bun.Glob(mergedOpts.glob)
 			const envFiles =
-				opts?.envFiles ??
+				mergedOpts.envFiles ??
 				(await Array.fromAsync(envGlob.scan({ dot: true, absolute: true })))
 			const typeDefinitions = new Set<string>()
 			if (envFiles.length === 0) {
-				console.log('No .env files found', { options: opts })
-				return
+				throw new Error(
+					`No .env files found. Please add a .env file to the project, or provide the 'envFiles' option to the plugin.`,
+				)
 			}
+			console.log('ignoring files:', mergedOpts.ignore?.join(', '))
+
 			for await (const file of envFiles) {
-				if (opts.ignore?.includes(path.basename(file))) continue
+				if (mergedOpts.ignore?.includes(path.basename(file))) continue
+				console.log(`processing ${path.basename(file)}`)
 				const envContent = await Bun.file(file).text()
 				// filter out comments and empty lines
 				const filtered = envContent
 					.split('\n')
 					.filter((line) => line.trim() !== '' && !line.trim().startsWith('#'))
 				for (const line of filtered) {
-					const [key] = line.split('=')
-					if (!key) continue
+					const [key, value] = line.split('=')
+					if (!key || !value) continue
 					typeDefinitions.add(`${key.trim()}: string;`)
 				}
 			}
-			await createEnv({ typeDefs: typeDefinitions, timestamp: opts.timestamp })
+			await createEnv({
+				typeDefs: typeDefinitions,
+				timestamp: mergedOpts.timestamp,
+				envDtsFile: mergedOpts.dtsFile,
+			})
 			console.log('env.d.ts generated!')
 		},
 	}
@@ -103,10 +125,9 @@ export default function bunEnvPlugin(
 
 async function createEnv({
 	typeDefs,
-	envFile,
+	envDtsFile,
 	timestamp,
-}: { typeDefs: Set<string>; envFile?: string; timestamp?: boolean }) {
-	const envDtsFile = envFile ?? path.join(process.cwd(), 'env.d.ts')
+}: { typeDefs: Set<string>; envDtsFile: string; timestamp?: boolean }) {
 	const comment = timestamp ? new Date().toLocaleString() : ''
 	const dtsContent = generateDtsString(typeDefs, comment)
 	// clear the file up to the mod line
@@ -131,16 +152,12 @@ function generateDtsString(typeDefs: Set<string>, timestamp?: string) {
 		defsContent += `\t\t${def}\n`
 	}
 	const timeString = timestamp
-		? '// Generated by Bun plugin at ' + `${timestamp}\n`
+		? `// Generated by Bun plugin at ${timestamp}\n`
 		: ''
 	const dtsContent = `${timeString}
 declare namespace NodeJS {
     export interface ProcessEnv {
 ${defsContent}    }
-}
-
-declare module 'bun' {
-    interface Env extends NodeJS.ProcessEnv {}
 }
 
 `
