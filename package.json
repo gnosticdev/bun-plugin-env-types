@@ -1,9 +1,0 @@
-{
-    "name": "bun-plugin-env-types",
-    "description": "A Bun plugin for generating typescript types for environment variables",
-    "author": "gnosticdev",
-    "dependencies": {},
-    "devDependencies": {
-        "@types/bun": "^1.0.8"
-    }
-}
