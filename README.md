@@ -9,7 +9,7 @@ I just wanted my environment variables availabe on `process.env` and `Bun.env` w
 ## Installation
 
 ```zsh
-bun i bun-plugin-env-types
+bun add -d bun-plugin-env-types
 ```
 
 ## Usage

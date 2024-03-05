@@ -65,9 +65,7 @@ const MOD_LINE = `
  * })
  * ```
  */
-export default function bunEnvPlugin(
-	pluginOpts: PluginOptions = {},
-): BunPlugin {
+export default function bunEnvPlugin(pluginOpts?: PluginOptions): BunPlugin {
 	const defaults: PluginOptions = {
 		dtsFile: 'env.d.ts',
 		glob: '.env*',
@@ -76,12 +74,14 @@ export default function bunEnvPlugin(
 		envFiles: undefined,
 	}
 	// just in case the user provides an option that is undefined
-	const filteredOptions: PluginOptions = Object.fromEntries(
-		Object.entries(pluginOpts).map(([key, value]) => [
-			key,
-			value === undefined ? defaults[key as keyof PluginOptions] : value,
-		]),
-	)
+	const filteredOptions: PluginOptions = pluginOpts
+		? Object.fromEntries(
+				Object.entries(pluginOpts).map(([key, value]) => [
+					key,
+					value === undefined ? defaults[key as keyof PluginOptions] : value,
+				]),
+		  )
+		: defaults
 	const mergedOpts = { ...defaults, ...filteredOptions } as FullOptions
 
 	return {
@@ -90,18 +90,23 @@ export default function bunEnvPlugin(
 			const envGlob = new Bun.Glob(mergedOpts.glob)
 			const envFiles =
 				mergedOpts.envFiles ??
-				(await Array.fromAsync(envGlob.scan({ dot: true, absolute: true })))
+				(
+					await Array.fromAsync(envGlob.scan({ dot: true, absolute: false }))
+				).filter((file) => !mergedOpts.ignore.some((ig) => ig.endsWith(file)))
+
 			const typeDefinitions = new Set<string>()
 			if (envFiles.length === 0) {
 				throw new Error(
 					`No .env files found. Please add a .env file to the project, or provide the 'envFiles' option to the plugin.`,
 				)
 			}
-			console.log('ignoring files:', mergedOpts.ignore?.join(', '))
 
 			for await (const file of envFiles) {
-				if (mergedOpts.ignore?.includes(path.basename(file))) continue
-				console.log(`processing ${path.basename(file)}`)
+				const isIgnored = mergedOpts.ignore?.includes(path.basename(file))
+				if (isIgnored) {
+					continue
+				}
+
 				const envContent = await Bun.file(file).text()
 				// filter out comments and empty lines
 				const filtered = envContent
@@ -113,12 +118,16 @@ export default function bunEnvPlugin(
 					typeDefinitions.add(`${key.trim()}: string;`)
 				}
 			}
+			if (typeDefinitions.size === 0) {
+				console.warn(
+					'no env variables found in .env files, with the given plugin options',
+				)
+			}
 			await createEnv({
 				typeDefs: typeDefinitions,
 				timestamp: mergedOpts.timestamp,
 				envDtsFile: mergedOpts.dtsFile,
 			})
-			console.log('env.d.ts generated!')
 		},
 	}
 }
