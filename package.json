@@ -49,5 +49,5 @@
     },
     "type": "module",
     "types": "./dist/bun.plugin.d.ts",
-    "version": "1.0.3"
+    "version": "1.1.0"
 }
