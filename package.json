@@ -1,26 +1,53 @@
 {
-    "name": "bun-plugin-env-types",
-    "description": "A Bun plugin for generating typescript types for environment variables",
     "author": "gnosticdev",
-    "version": "1.0.3",
-    "private": false,
-    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/gnosticdev/bun-plugin-env-types/issues"
+    },
+    "description": "A Bun plugin for generating typescript types for environment variables",
+    "devDependencies": {
+        "@types/bun": "^1.0.8"
+    },
     "engines": {
         "bun": ">=1.0.0",
         "node": ">=21.0.0"
     },
-    "main": "bun.plugin.ts",
+    "esnext": "dist/bun.plugin.js",
+    "exports": {
+        ".": {
+            "default": "./dist/bun.plugin.js",
+            "import": "./dist/bun.plugin.js",
+            "require": "./dist/bun.plugin.js",
+            "types": "./dist/bun.plugin.d.ts"
+        }
+    },
+    "keywords": [
+        "bun",
+        "plugin",
+        "env",
+        "types",
+        "typescript",
+        "type-safe"
+    ],
+    "license": "MIT",
+    "main": "./dist/bun.plugin.js",
+    "name": "bun-plugin-env-types",
     "peerDependencies": {
         "bun": "^1.0.0"
     },
+    "private": false,
     "repository": {
         "type": "git",
         "url": "https://github.com/gnosticdev/bun-plugin-env-types.git"
     },
     "scripts": {
-        "build": "rm -rf ./dist && tsc"
+        "build": "rm -rf ./dist && tsc",
+        "lint": "biome lint . --apply",
+        "test": "bun test",
+        "test:existing": "bun test existing --bail",
+        "test:plugin": "bun test plugin --bail",
+        "test:custom": "bun test custom"
     },
-    "devDependencies": {
-        "@types/bun": "^1.0.8"
-    }
+    "type": "module",
+    "types": "./dist/bun.plugin.d.ts",
+    "version": "1.0.3"
 }

@@ -1,5 +1,4 @@
-import { type BunPlugin } from 'bun'
-import path from 'node:path'
+import { Glob, type BunFile, type BunPlugin } from 'bun'
 
 export type PluginOptions = {
 	/**
@@ -8,9 +7,9 @@ export type PluginOptions = {
 	 * _Notes:_ If you provide this option, the `glob` option will be ignored.
 	 * @default undefined
 	 */
-	envFiles?: string[] | string
+	envFiles?: string[]
 	/**
-	 * The name of the env.d.ts file
+	 * Change the name of the generated d.ts file
 	 * @default 'env.d.ts'
 	 */
 	dtsFile?: string
@@ -30,6 +29,10 @@ export type PluginOptions = {
 	 * ['.env.example']
 	 */
 	ignore?: string[]
+	/**
+	 * Verbose logs for debugging
+	 */
+	verbose?: boolean
 }
 
 type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
@@ -42,19 +45,29 @@ const MOD_LINE = `
 `
 
 /**
- * Generate TypeScript definitions for all .env files in the project.
+ * Generate type definitions for all .env files in the project.
  *
  * Scans the project for .env files using `Bun.glob`, then inserts them into a env.d.ts file under the `NodeJS.ProcessEnv` namespace, and Bun.Env interface.
  *
  * You can add your own custom global types to the env.d.ts file by adding them below the generated type dets.
- * @param pluginOpts - the options for the plugin
+ * @param pluginOpts - optional plugin configuration
+ *
  * @example
+ * create `preload.ts`, import the plguin, and call it in the file:
+ * ```ts
+ * // preload.ts
+ * import envPlugin from 'bun-plugin-env-types'
+ *
+ * envPlugin()
+ * ```
+ * then add the file to bunfig.toml under `preload`:
  * ```toml
  * # bunfig.toml
- * # add to bunfig.toml under `preload` to run before any `bun run` command.
- * preload = ["./bun.plugin.ts"]
+ * preload = ["./preload.ts"]
  * ```
+ *
  * @example
+ * Or you can use the plugin in a build script:
  * ```ts
  * // build.ts
  * import envPlugin from 'bun-plugin-env-types'
@@ -66,12 +79,85 @@ const MOD_LINE = `
  * ```
  */
 export default function bunEnvPlugin(pluginOpts?: PluginOptions): BunPlugin {
-	const defaults: PluginOptions = {
+	const mergedOpts = mergeOptions(pluginOpts)
+	return {
+		name: 'bun-plugin-env-types',
+		setup: async () => {
+			const envGlob = new Bun.Glob(mergedOpts.glob)
+			const envFiles =
+				mergedOpts.envFiles ?? (await getEnvFiles(envGlob, mergedOpts.ignore))
+
+			mergedOpts.verbose && console.log({ options: mergedOpts, envFiles })
+
+			if (envFiles.length === 0) {
+				mergedOpts.verbose &&
+					console.log(
+						'\x1b[38;5;222m No .env files found. Please add a .env file to the project, or provide the `envFiles` option to the plugin.\x1b[0m',
+					)
+				return
+			}
+
+			// store the type definitions for each .env file
+			const newTypeDefs = new Set<string>()
+
+			for await (const file of envFiles) {
+				const envContent = await Bun.file(file).text()
+				// filter out comments and empty lines
+				const filtered = envContent
+					.split('\n')
+					.filter((line) => line.trim() !== '' && !line.trim().startsWith('#'))
+				for (const line of filtered) {
+					const [key, value] = line.split('=')
+					if (!key || !value) continue
+					newTypeDefs.add(`${key.trim()}: string;`)
+				}
+			}
+
+			if (newTypeDefs.size === 0) {
+				console.warn(
+					'no env variables found in .env files, with the given plugin options',
+				)
+			}
+			// our env.d.ts file is not 'created' until it is read at least once (lazily loaded)
+			const envDtsFile = Bun.file(mergedOpts.dtsFile)
+
+			// allow for modifying the output file - favor the existing type defs if they exist
+			const existingDtsContent =
+				(await envDtsFile
+					.text()
+					.catch(() => console.log('no env.d.ts file found'))) ?? null
+			const existingTypeDefs = existingDtsContent
+				? await getExistingTypeDefs(existingDtsContent)
+				: new Set<string>()
+			if (existingTypeDefs.size > 0) {
+				for (const def of existingTypeDefs) {
+					if (!newTypeDefs.has(def)) {
+						existingTypeDefs.delete(def)
+					}
+				}
+			}
+			const mergedTypeDefs = new Set([...existingTypeDefs, ...newTypeDefs])
+
+			const outFile = await createEnv({
+				typeDefs: mergedTypeDefs,
+				timestamp: mergedOpts.timestamp,
+				envDtsFile,
+			})
+			if (outFile && mergedOpts.verbose) {
+				console.log('\x1b[38;5;226m > outfile created', outFile.name)
+			}
+		},
+	}
+}
+
+function mergeOptions(pluginOpts: PluginOptions | undefined) {
+	const defaults: FullOptions = {
 		dtsFile: 'env.d.ts',
 		glob: '.env*',
 		timestamp: true,
 		ignore: ['.env.example'],
 		envFiles: undefined,
+		verbose: false,
 	}
 	// just in case the user provides an option that is undefined
 	const filteredOptions: PluginOptions = pluginOpts
@@ -83,76 +169,29 @@ export default function bunEnvPlugin(pluginOpts?: PluginOptions): BunPlugin {
 		  )
 		: defaults
 	const mergedOpts = { ...defaults, ...filteredOptions } as FullOptions
-
-	return {
-		name: 'bun-plugin-env-types',
-		setup: async () => {
-			const envGlob = new Bun.Glob(mergedOpts.glob)
-			const envFiles =
-				mergedOpts.envFiles ??
-				(
-					await Array.fromAsync(envGlob.scan({ dot: true, absolute: false }))
-				).filter((file) => !mergedOpts.ignore.some((ig) => ig.endsWith(file)))
-
-			const typeDefinitions = new Set<string>()
-			if (envFiles.length === 0) {
-				throw new Error(
-					`No .env files found. Please add a .env file to the project, or provide the 'envFiles' option to the plugin.`,
-				)
-			}
-
-			for await (const file of envFiles) {
-				const isIgnored = mergedOpts.ignore?.includes(path.basename(file))
-				if (isIgnored) {
-					continue
-				}
-
-				const envContent = await Bun.file(file).text()
-				// filter out comments and empty lines
-				const filtered = envContent
-					.split('\n')
-					.filter((line) => line.trim() !== '' && !line.trim().startsWith('#'))
-				for (const line of filtered) {
-					const [key, value] = line.split('=')
-					if (!key || !value) continue
-					typeDefinitions.add(`${key.trim()}: string;`)
-				}
-			}
-			if (typeDefinitions.size === 0) {
-				console.warn(
-					'no env variables found in .env files, with the given plugin options',
-				)
-			}
-			await createEnv({
-				typeDefs: typeDefinitions,
-				timestamp: mergedOpts.timestamp,
-				envDtsFile: mergedOpts.dtsFile,
-			})
-		},
-	}
+	return mergedOpts
 }
 
 async function createEnv({
 	typeDefs,
 	envDtsFile,
 	timestamp,
-}: { typeDefs: Set<string>; envDtsFile: string; timestamp?: boolean }) {
+}: { typeDefs: Set<string>; envDtsFile: BunFile; timestamp?: boolean }) {
 	const comment = timestamp ? new Date().toLocaleString() : ''
 	const dtsContent = generateDtsString(typeDefs, comment)
 	// clear the file up to the mod line
-	const file = Bun.file(envDtsFile)
-	if (await file.exists()) {
-		const content = await file.text()
-		const modLine = content.indexOf(MOD_LINE)
-		if (modLine !== -1) {
-			// must concat old and new content bc Bun.write doesn't append
-			const oldContent = content.slice(modLine, content.length)
-			await Bun.write(envDtsFile, dtsContent + oldContent)
-			return
-		}
+	const content = (await envDtsFile.text().catch(() => '')) ?? ''
+	const modLine = content.indexOf(MOD_LINE)
+	if (modLine !== -1) {
+		// must concat old and new content bc Bun.write doesn't append
+		const oldContent = content.slice(modLine, content.length)
+		await Bun.write(envDtsFile, dtsContent + oldContent)
+		return envDtsFile
 	}
+
 	// Write the env.d.ts file
 	await Bun.write(envDtsFile, `${dtsContent + MOD_LINE}\n`)
+	return envDtsFile
 }
 
 function generateDtsString(typeDefs: Set<string>, timestamp?: string) {
@@ -171,4 +210,35 @@ ${defsContent}    }
 
 `
 	return dtsContent
+}
+
+async function getExistingTypeDefs(content: string): Promise<Set<string>> {
+	try {
+		const typeDefs = new Set<string>()
+		const processEnvString = 'export interface ProcessEnv {'
+		const processEnvStart = content.indexOf(processEnvString)
+		const processEnvEnd = content.indexOf('}', processEnvStart)
+		const processEnvContent = content.slice(
+			processEnvStart + processEnvString.length,
+			processEnvEnd,
+		)
+
+		// Split the content by new lines and filter out empty lines or comments
+		for (const line of processEnvContent.split('\n')) {
+			const trimmedLine = line.trim()
+			if (trimmedLine && !trimmedLine.startsWith('//')) {
+				typeDefs.add(trimmedLine)
+			}
+		}
+
+		return typeDefs
+	} catch (error) {
+		console.error('Error reading existing type definitions:', error)
+		return new Set<string>()
+	}
+}
+
+export async function getEnvFiles(glob: Glob, ignore: string[]) {
+	const files = await Array.fromAsync(glob.scan({ dot: true, absolute: false }))
+	return files.filter((file) => !ignore.some((ig) => ig.endsWith(file)))
 }

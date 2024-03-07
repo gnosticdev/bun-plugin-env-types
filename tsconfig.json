@@ -4,7 +4,7 @@
         "module": "ESNext",
         "moduleResolution": "Bundler",
         "moduleDetection": "force",
-        "lib": ["ESNext", "DOM"],
+        "lib": ["ESNext"],
         "strict": true,
         "skipLibCheck": true,
         "isolatedModules": true,
