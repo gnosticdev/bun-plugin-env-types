@@ -11,7 +11,7 @@
         "bun": ">=1.0.0",
         "node": ">=21.0.0"
     },
-    "esnext": "dist/bun.plugin.js",
+    "esnext": "dist/index.js",
     "exports": {
         ".": {
             "default": "./dist/bun.plugin.js",
@@ -29,7 +29,7 @@
         "type-safe"
     ],
     "license": "MIT",
-    "main": "./dist/bun.plugin.js",
+    "main": "./dist/index.js",
     "name": "bun-plugin-env-types",
     "peerDependencies": {
         "bun": "^1.0.0"
@@ -48,6 +48,6 @@
         "test:custom": "bun test custom"
     },
     "type": "module",
-    "types": "./dist/bun.plugin.d.ts",
+    "types": "./dist/index.d.ts",
     "version": "1.2.0"
 }

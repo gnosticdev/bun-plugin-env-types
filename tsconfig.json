@@ -20,5 +20,5 @@
         "outDir": "dist",
         "declaration": true
     },
-    "files": ["bun.plugin.ts"]
+    "files": ["index.ts", "utils.ts"]
 }
