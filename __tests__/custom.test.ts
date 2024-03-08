@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import envPlugin, { PluginOptions, getEnvFiles } from '../bun.plugin'
+import envPlugin, { PluginOptions } from '../bun.plugin'
+import { getEnvFiles } from '../utils'
 import { TempBunDir, TempBunFile } from './utils'
 
 export type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
@@ -34,12 +35,12 @@ describe('custom options', async () => {
 		} satisfies FullOptions
 
 		await using tempDir = await TempBunDir.create(TEMP_DIR)
-		tempDir.addFile({
-			file: 'entry.ts',
+		const entry = await tempDir.addShellFile({
+			name: 'entry.ts',
 			contents: 'const hiThere = "hi there"\nconsole.log(hiThere)\n',
 		})
 		await Bun.build({
-			entrypoints: [tempDir.file.name!],
+			entrypoints: [entry.filePath],
 			plugins: [envPlugin(customOptions)],
 			outdir: tempDir.path,
 		})

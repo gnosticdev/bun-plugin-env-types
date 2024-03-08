@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import envPlugin from '../bun.plugin'
 import { TempBunDir, TempBunFile } from './utils'
 
@@ -9,15 +9,11 @@ describe('keep the .env.d.ts file modifications', async () => {
         export default content
     }`
 	const TEMP_DIR = 'tmp'
-	const ENV_DTS_PATH = 'env.d.ts'
+	const DTS_PATH = 'env.d.ts'
 	let contentsWithMods: string
 	let envValidPath: string
-
+	let success = true
 	beforeEach(async () => {
-		await using envTestIgnore = await TempBunFile.create({
-			path: '.env.test.ignore',
-			contents: 'IGNORED_VAR=ignored',
-		})
 		await using envTestExample = await TempBunFile.create({
 			path: '.env.test.example',
 			contents: 'EXAMPLE_VAR=example',
@@ -27,25 +23,35 @@ describe('keep the .env.d.ts file modifications', async () => {
 			contents: 'VALID_VAR=valid',
 		})
 		envValidPath = envTestValid.path
-		console.log({ envValidPath })
 
 		await using tempEntryPoint = await TempBunDir.create(TEMP_DIR)
-		const entry = await tempEntryPoint.addFile({
-			file: 'entry.ts',
+		const entry = await tempEntryPoint.addShellFile({
+			name: 'entry.ts',
 			contents: 'const hiThere = "hi there"\nconsole.log(hiThere)\n',
 		})
-		await Bun.build({
-			entrypoints: [entry.name!],
+		const builder = await Bun.build({
+			entrypoints: [entry.filePath],
 			plugins: [envPlugin()],
 			outdir: tempEntryPoint.path,
 		})
-		const dtsContent = await Bun.file(ENV_DTS_PATH).text()
+		if (!builder.success) {
+			success = false
+			console.error(builder.logs.join('\n'))
+		} else {
+			console.log(`build ${builder.outputs.length} file(s)`)
+		}
+
+		const dtsContent = await Bun.file(DTS_PATH).text()
 		contentsWithMods = (dtsContent + mods).trim()
 	})
 
+	afterEach(async () => {
+		await Bun.$`rm ${DTS_PATH}`
+	})
+
 	test('gets the env variables', async () => {
-		expect(contentsWithMods).toInclude('TEST_VAR: string')
-		expect(contentsWithMods).toInclude('LOCAL_VAR: string')
+		expect(contentsWithMods).toInclude('EXAMPLE_VAR: string')
+		expect(contentsWithMods).toInclude('VALID_VAR: string')
 	})
 	test('should keep the modifications', async () => {
 		expect(contentsWithMods).toInclude(mods)

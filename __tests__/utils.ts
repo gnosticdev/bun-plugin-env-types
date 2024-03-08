@@ -1,14 +1,14 @@
 import { BunFile } from 'bun'
 
+export type ShellFile = { filePath: string; text: string; exists: boolean }
+
 export class TempBunDir implements AsyncDisposable {
 	public path: string
-	private _file: BunFile
+	private verbose = false
+	public shellFile: ShellFile = { filePath: '', text: '', exists: false }
 
-	get file() {
-		return this._file
-	}
-	set file(value: BunFile) {
-		this._file = value
+	public setVerbose(value: boolean) {
+		this.verbose = value
 	}
 
 	private constructor(dirPath: string) {
@@ -16,30 +16,35 @@ export class TempBunDir implements AsyncDisposable {
 	}
 
 	/**
-	 * Adds a file to the temp directory
+	 * Adds a file to the temp directory using Bun Shell
 	 *
-	 * **This will be deleted with the directory!**
+	 * _This will be **deleted** with the directory!_
 	 */
-	public async addFile({
-		file,
+	public async addShellFile({
+		name,
 		contents,
-	}: { file: string; contents?: string }) {
-		await using tempFile = await TempBunFile.create({
-			path: `${this.path}/${file}`,
-		})
-		this.file = tempFile.file
-		if (contents) {
-			this.file = await tempFile.append(contents)
+	}: { name: string; contents: string }) {
+		this.shellFile = {
+			filePath: `${this.path}/${name}`,
+			text: contents,
+			exists: true,
 		}
-		return this.file
+		await Bun.$`echo ${contents} > ${this.shellFile.filePath}`
+		this.verbose &&
+			console.log(
+				`\x1b[38;5;112mAdded shell file: ${this.shellFile.filePath}\x1b[0m`,
+			)
+		return this.shellFile
 	}
 
 	public async [Symbol.asyncDispose]() {
 		await Bun.$`rm -rf ${this.path}`
+		this.verbose &&
+			console.log(`\x1b[38;5;199mDeleted temp dir: ${this.path}\x1b[0m`)
 	}
 
 	public static async create(dirPath: string) {
-		await Bun.$`mkdir -p ${dirPath}`
+		await Bun.$`mkdir -p ${dirPath}`.quiet()
 		return new TempBunDir(dirPath)
 	}
 }
@@ -57,6 +62,12 @@ type TempFileCreate = {
 export class TempBunFile implements AsyncDisposable {
 	path: string
 	file: BunFile
+	private verbose = false
+
+	public setVerbose(value: boolean) {
+		this.verbose = value
+	}
+
 	private constructor({ path, file }: TempFile) {
 		this.path = path
 		this.file = file
@@ -72,6 +83,8 @@ export class TempBunFile implements AsyncDisposable {
 	// Will auto delete when the scope is exited
 	public async [Symbol.asyncDispose]() {
 		await Bun.$`rm ${this.path}`.quiet()
+		this.verbose &&
+			console.log(`\x1b[38;5;201mDeleted temp file: ${this.path}\x1b[0m`)
 	}
 	// Now we can append to a BunFile :)
 	public async append(contents: string) {
