@@ -36,9 +36,9 @@
 	"scripts": {
 		"build": "rm -rf ./dist && tsc",
 		"tag": "git tag v$(node -p \"require('./package.json').version\") && git push origin v$(node -p \"require('./package.json').version\")",
-		"publish:patch": "npm version patch && npm run build && npm publish --access public && npm run tag",
-		"publish:minor": "npm version minor && npm run build && npm publish --access public && npm run tag",
-		"publish:major": "npm version major && npm run build && npm publish --access public && npm run tag",
+		"publish:patch": "npm version patch && npm run build && npm publish --access public && npm run tag --allow-same-version",
+		"publish:minor": "npm version minor && npm run build && npm publish --access public && npm run tag --allow-same-version",
+		"publish:major": "npm version major && npm run build && npm publish --access public && npm run tag --allow-same-version",
 		"lint": "biome lint . --apply",
 		"test": "bun test",
 		"test:existing": "bun test existing --bail",
