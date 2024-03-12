@@ -35,6 +35,10 @@
 	"files": ["dist", "package.json", "README.md", "tsconfig.json"],
 	"scripts": {
 		"build": "rm -rf ./dist && tsc",
+		"tag": "git tag v$npm_package_version && git push origin v$npm_package_version",
+		"publish:patch": "npm version patch && npm run build && npm publish --access public && npm run tag",
+		"publish:minor": "npm version minor && npm run build && npm publish --access public && npm run tag",
+		"publish:major": "npm version major && npm run build && npm publish --access public && npm run tag",
 		"lint": "biome lint . --apply",
 		"test": "bun test",
 		"test:existing": "bun test existing --bail",
