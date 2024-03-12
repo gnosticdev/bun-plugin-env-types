@@ -1,53 +1,47 @@
 {
-    "author": "gnosticdev",
-    "bugs": {
-        "url": "https://github.com/gnosticdev/bun-plugin-env-types/issues"
-    },
-    "description": "A Bun plugin for generating typescript types for environment variables",
-    "devDependencies": {
-        "@types/bun": "^1.0.8"
-    },
-    "engines": {
-        "bun": ">=1.0.0",
-        "node": ">=21.0.0"
-    },
-    "esnext": "dist/index.js",
-    "exports": {
-        ".": {
-            "default": "./dist/bun.plugin.js",
-            "import": "./dist/bun.plugin.js",
-            "require": "./dist/bun.plugin.js",
-            "types": "./dist/bun.plugin.d.ts"
-        }
-    },
-    "keywords": [
-        "bun",
-        "plugin",
-        "env",
-        "types",
-        "typescript",
-        "type-safe"
-    ],
-    "license": "MIT",
-    "main": "./dist/index.js",
-    "name": "bun-plugin-env-types",
-    "peerDependencies": {
-        "bun": "^1.0.0"
-    },
-    "private": false,
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/gnosticdev/bun-plugin-env-types.git"
-    },
-    "scripts": {
-        "build": "rm -rf ./dist && tsc",
-        "lint": "biome lint . --apply",
-        "test": "bun test",
-        "test:existing": "bun test existing --bail",
-        "test:plugin": "bun test plugin --bail",
-        "test:custom": "bun test custom"
-    },
-    "type": "module",
-    "types": "./dist/index.d.ts",
-    "version": "1.3.0"
+	"author": "gnosticdev",
+	"bugs": {
+		"url": "https://github.com/gnosticdev/bun-plugin-env-types/issues"
+	},
+	"description": "A Bun plugin for generating typescript types for environment variables",
+	"devDependencies": {
+		"@types/bun": "^1.0.8"
+	},
+	"engines": {
+		"bun": ">=1.0.0",
+		"node": ">=21.0.0"
+	},
+	"esnext": "dist/index.js",
+	"exports": {
+		".": {
+			"default": "./dist/index.js",
+			"import": "./dist/index.js",
+			"require": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"keywords": ["bun", "plugin", "env", "types", "typescript", "type-safe"],
+	"license": "MIT",
+	"main": "./dist/index.js",
+	"name": "bun-plugin-env-types",
+	"peerDependencies": {
+		"bun": "^1.0.0"
+	},
+	"private": false,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/gnosticdev/bun-plugin-env-types.git"
+	},
+	"files": ["dist", "package.json", "README.md", "tsconfig.json"],
+	"scripts": {
+		"build": "rm -rf ./dist && tsc",
+		"lint": "biome lint . --apply",
+		"test": "bun test",
+		"test:existing": "bun test existing --bail",
+		"test:plugin": "bun test plugin --bail",
+		"test:custom": "bun test custom"
+	},
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"version": "1.3.0"
 }

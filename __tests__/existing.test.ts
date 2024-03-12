@@ -1,8 +1,8 @@
+import {} from 'async_hooks'
 import { BunFile } from 'bun'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import envPlugin from '../bun.plugin'
+import envPlugin from '../src/bun.plugin'
 import { ShellFile, TempBunDir, TempBunFile } from './utils'
-import {} from 'async_hooks'
 
 const EXISTING_STR = `
 declare namespace NodeJS {

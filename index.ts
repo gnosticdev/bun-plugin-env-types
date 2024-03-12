@@ -1,1 +1,1 @@
-export { default as envPlugin, type PluginOptions } from './bun.plugin'
+export { default as envPlugin, type PluginOptions } from './src/bun.plugin'

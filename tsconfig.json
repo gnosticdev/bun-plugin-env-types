@@ -20,5 +20,5 @@
         "outDir": "dist",
         "declaration": true
     },
-    "files": ["index.ts", "utils.ts"]
+    "include": ["src/**/*", "index.ts"]
 }
