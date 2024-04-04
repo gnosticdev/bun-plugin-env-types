@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import envPlugin from '../src/bun.plugin'
 import { TempBunDir, TempBunFile } from './utils'
 
@@ -13,16 +13,18 @@ describe('keep the .env.d.ts file modifications', async () => {
 	let contentsWithMods: string
 	let envValidPath: string
 	let success = true
+
 	beforeEach(async () => {
+		// ignores the .env.example file
 		await using envTestExample = await TempBunFile.create({
-			path: '.env.test.example',
+			filePath: '.env.test.example',
 			contents: 'EXAMPLE_VAR=example',
 		})
 		await using envTestValid = await TempBunFile.create({
-			path: '.env.test',
+			filePath: '.env.test',
 			contents: 'VALID_VAR=valid',
 		})
-		envValidPath = envTestValid.path
+		envValidPath = envTestValid.filePath
 
 		await using tempEntryPoint = await TempBunDir.create(TEMP_DIR)
 		const entry = await tempEntryPoint.addShellFile({
@@ -49,14 +51,20 @@ describe('keep the .env.d.ts file modifications', async () => {
 		await Bun.$`rm ${DTS_PATH}`
 	})
 
-	test('gets the env variables', async () => {
-		expect(contentsWithMods).toInclude('EXAMPLE_VAR: string')
+	it('should not ignore the env.test.example file', async () => {
+		const contents = await Bun.file(DTS_PATH).text()
+		expect(contents).toContain('EXAMPLE_VAR: string')
+	})
+
+	it('should generate the other env var', async () => {
 		expect(contentsWithMods).toInclude('VALID_VAR: string')
 	})
-	test('should keep the modifications', async () => {
+
+	it('should keep the modifications', async () => {
 		expect(contentsWithMods).toInclude(mods)
 	})
-	test('modifications only listed once', async () => {
+
+	it('should list the modifications only once', async () => {
 		expect(contentsWithMods.split(mods)).toBeArrayOfSize(2)
 	})
 })

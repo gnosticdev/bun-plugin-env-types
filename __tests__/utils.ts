@@ -1,7 +1,8 @@
-import { BunFile } from 'bun'
+import type { BunFile } from 'bun'
 
 export type ShellFile = { filePath: string; text: string; exists: boolean }
 
+export const redLog = (message: string) => `\x1b[38;5;199m${message}\x1b[0m`
 export class TempBunDir implements AsyncDisposable {
 	public path: string
 	private verbose = false
@@ -59,36 +60,83 @@ type TempFileCreate = {
 	contents?: string
 }
 
-export class TempBunFile implements AsyncDisposable {
-	path: string
-	file: BunFile
+export class TempBunFile<
+	TPath extends string,
+	TJson,
+	TType extends 'json' | 'text',
+> implements AsyncDisposable
+{
+	public filePath: TPath
+	public type: TType
 	private verbose = false
 
 	public setVerbose(value: boolean) {
 		this.verbose = value
 	}
 
-	private constructor({ path, file }: TempFile) {
-		this.path = path
-		this.file = file
+	private constructor(
+		filePath: TPath,
+		private text: string,
+		private json: TJson,
+		type: TType,
+	) {
+		this.filePath = filePath
+		this.text = text
+		this.json = json
+		this.type = type
 	}
-	// The scope will be determined by where this is called
-	public static async create({ path, contents }: TempFileCreate) {
-		const tmpFile = Bun.file(path)
-		if (contents) {
-			await Bun.write(tmpFile, contents)
-		}
-		return new TempBunFile({ path: path, file: tmpFile })
+
+	public async getJson() {
+		return (await Bun.$`cat ${this.filePath}`.json()) as TJson
 	}
-	// Will auto delete when the scope is exited
+
+	public async getText() {
+		return await Bun.$`cat ${this.filePath}`.text()
+	}
+
+	public async append(text: string) {
+		await Bun.$`echo ${text} >> ${this.filePath}`
+	}
+
 	public async [Symbol.asyncDispose]() {
-		await Bun.$`rm ${this.path}`.quiet()
-		this.verbose &&
-			console.log(`\x1b[38;5;201mDeleted temp file: ${this.path}\x1b[0m`)
+		const exitCode = (await Bun.$`rm ${this.filePath}`.nothrow()).exitCode
+		if (exitCode !== 0) {
+			console.error(redLog(`Failed to delete temp file: ${this.filePath}`))
+			return
+		}
+		this.verbose && console.log(redLog(`Deleted temp file: ${this.filePath}`))
 	}
-	// Now we can append to a BunFile :)
-	public async append(contents: string) {
-		await Bun.$`echo ${contents} >> ${this.file}`.quiet()
-		return this.file
+
+	/**
+	 * Creates a temporary file in the current directory.
+	 * @throws if file already exists
+	 */
+	public static async create<
+		TFilePath extends `${string}.${string}`,
+		TFileType extends 'json' | 'text' = TFilePath extends `${string}.json`
+			? 'json'
+			: 'text',
+	>({
+		filePath,
+		contents,
+	}: TFilePath extends `${string}.json`
+		? { filePath: TFilePath; contents: object }
+		: { filePath: TFilePath; contents: string }) {
+		// throw if file exists
+		const exitCode = (await Bun.$`ls ${filePath}`.quiet().nothrow()).exitCode
+		if (exitCode === 0) {
+			throw new Error(`File already exists: ${filePath}`)
+		}
+		const text: string =
+			typeof contents === 'string' ? contents : JSON.stringify(contents)
+		const _json = typeof contents === 'object' ? contents : undefined
+		const type = (filePath.endsWith('.json') ? 'json' : 'text') as TFileType
+		await Bun.$`echo ${text} > ${filePath}`.quiet()
+		return new TempBunFile<TFilePath, typeof _json, TFileType>(
+			filePath as TFilePath,
+			text,
+			_json,
+			type,
+		)
 	}
 }

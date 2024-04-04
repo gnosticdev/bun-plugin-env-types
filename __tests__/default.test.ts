@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import envPlugin from '../src/bun.plugin'
-import { ShellFile, TempBunDir, TempBunFile } from './utils'
+import { TempBunDir, TempBunFile, type ShellFile } from './utils'
 
 describe('default plugin options', async () => {
 	const DTS_FILE = 'env.d.ts'
@@ -9,11 +9,11 @@ describe('default plugin options', async () => {
 	let success = true
 	beforeEach(async () => {
 		await using __tempEnv = await TempBunFile.create({
-			path: '.env',
+			filePath: '.env',
 			contents: 'SOME_VAR=some_var',
 		})
 		await using __tempEnvEx = await TempBunFile.create({
-			path: '.env.example',
+			filePath: '.env.example',
 			contents: 'EXAMPLE_VAR=example',
 		})
 

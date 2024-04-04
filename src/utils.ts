@@ -1,4 +1,4 @@
-import { Glob, type BunFile } from 'bun'
+import type { BunFile, Glob } from 'bun'
 
 export async function createEnv({
 	typeDefs,

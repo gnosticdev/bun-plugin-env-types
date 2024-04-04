@@ -1,4 +1,4 @@
-import { type BunPlugin } from 'bun'
+import type { BunPlugin } from 'bun'
 import { createEnv, getEnvFiles } from './utils'
 
 export type PluginOptions = {
@@ -42,7 +42,7 @@ type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
 /**
  * Generate type definitions for all .env files in the project.
  *
- * Scans the project for .env files using `Bun.glob`, then inserts them into a env.d.ts file under the `NodeJS.ProcessEnv` namespace, and Bun.Env interface.
+ * Scans the project for .env files using `Bun.glob`, then inserts them into a env.d.ts file under the `NodeJS.ProcessEnv` namespace.
  *
  * You can add your own custom global types to the env.d.ts file by adding them below the generated type dets.
  * @param pluginOpts - optional plugin configuration
@@ -166,7 +166,7 @@ function mergeOptions(pluginOpts: PluginOptions | undefined) {
 					key,
 					value === undefined ? defaults[key as keyof PluginOptions] : value,
 				]),
-		  )
+			)
 		: defaults
 	const mergedOpts = { ...defaults, ...filteredOptions } as FullOptions
 	return mergedOpts

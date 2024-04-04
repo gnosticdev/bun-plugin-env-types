@@ -1,8 +1,7 @@
-import {} from 'async_hooks'
-import { BunFile } from 'bun'
+import type { BunFile } from 'bun'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import envPlugin from '../src/bun.plugin'
-import { ShellFile, TempBunDir, TempBunFile } from './utils'
+import { TempBunDir, TempBunFile, type ShellFile } from './utils'
 
 const EXISTING_STR = `
 declare namespace NodeJS {
@@ -14,23 +13,23 @@ declare namespace NodeJS {
 
 describe('uses existing env.d.ts types', async () => {
 	const DTS_FILE = 'env.d.ts'
-	let existingEnvBunFile: BunFile
+	let existingEnvBunFile: TempBunFile<typeof DTS_FILE, undefined, 'text'>
 	let success = true
 	let entry: ShellFile
 	beforeEach(async () => {
 		//create an existing env.d.ts file
 		// DONT USE `using` bc it needs to be persisted
 		const __existingEnv = await TempBunFile.create({
-			path: DTS_FILE,
+			filePath: DTS_FILE,
 			contents: EXISTING_STR,
 		})
 		// only a single .env file
 		await using tempEnv = await TempBunFile.create({
-			path: '.env',
+			filePath: '.env',
 			contents: 'SOME_VAR=abc\nLOCAL_VAR=efg',
 		})
 
-		existingEnvBunFile = __existingEnv.file
+		existingEnvBunFile = __existingEnv
 
 		await using tempDir = await TempBunDir.create('tmp')
 		tempDir.setVerbose(true)
@@ -56,13 +55,13 @@ describe('uses existing env.d.ts types', async () => {
 	})
 
 	test.skipIf(!success)('should use existing env.d.ts file', async () => {
-		expect(await existingEnvBunFile.text()).toBeString()
-		expect(await existingEnvBunFile.text()).toInclude("LOCAL_VAR: 'a' | 'b'")
+		expect(await existingEnvBunFile.getText()).toBeString()
+		expect(await existingEnvBunFile.getText()).toInclude("LOCAL_VAR: 'a' | 'b'")
 	})
 	test.skipIf(!success)(
 		'should not overwrite existing env.d.ts file',
 		async () => {
-			const contents = await existingEnvBunFile.text()
+			const contents = await existingEnvBunFile.getText()
 			expect(contents).toInclude('SOME_VAR: string')
 		},
 	)

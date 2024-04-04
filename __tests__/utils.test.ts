@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import envPlugin from '../src/bun.plugin'
-import { ShellFile, TempBunDir, TempBunFile } from './utils'
+import { TempBunDir, TempBunFile, type ShellFile } from './utils'
 
 describe('temp dir', async () => {
 	const TEMP_DIR = 'tmp'
@@ -19,7 +19,7 @@ describe('temp dir', async () => {
 		})
 
 		await using __env = await TempBunFile.create({
-			path: '.env',
+			filePath: '.env',
 			contents: 'SOME_VAR=abc\nLOCAL_VAR=local',
 		})
 		const builder = await Bun.build({
