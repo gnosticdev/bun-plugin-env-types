@@ -20,14 +20,7 @@
 			"types": "./dist/index.d.ts"
 		}
 	},
-	"keywords": [
-		"bun",
-		"plugin",
-		"env",
-		"types",
-		"typescript",
-		"type-safe"
-	],
+	"keywords": ["bun", "plugin", "env", "types", "typescript", "type-safe"],
 	"license": "MIT",
 	"main": "./dist/index.js",
 	"name": "bun-plugin-env-types",
@@ -39,12 +32,7 @@
 		"type": "git",
 		"url": "https://github.com/gnosticdev/bun-plugin-env-types.git"
 	},
-	"files": [
-		"dist",
-		"package.json",
-		"README.md",
-		"tsconfig.json"
-	],
+	"files": ["dist", "package.json", "README.md", "tsconfig.json"],
 	"scripts": {
 		"build": "rm -rf ./dist && tsc",
 		"version": "echo v$(cat package.json | jq -r '.version')",
@@ -52,7 +40,7 @@
 		"publish:minor": "npm version --allow-same-version minor && npm run build && npm publish && npm run tag --allow-same-version",
 		"publish:major": "npm version --allow-same-version major && npm run build && npm publish && npm run tag --allow-same-version",
 		"lint": "biome lint . --apply",
-		"test": "bun test",
+		"tag": "git tag -a v$(cat package.json | jq -r '.version') -m v$(cat package.json | jq -r '.version')",
 		"test:existing": "bun test existing --bail",
 		"test:plugin": "bun test plugin --bail",
 		"test:custom": "bun test custom"
