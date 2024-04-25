@@ -6,10 +6,11 @@ Get autocomplete for your environment variables without manual configuration.
 
 I just wanted type-safe environment variables availabe on `process.env` and `Bun.env` without having to manually add themm. So, I figure why not use the Bun plugin system to make a plugin that does this on the fly.
 
-Can be used in 2 ways:
+Can be used in 3 ways:
 
 1) [Runtime Plugins](https://bun.sh/docs/runtime/plugins) - generate the env.d.ts file whenever you use a `bun` command. i.e. `bun run`, `bun build`, `bun ./script.ts`, etc.
 2) [Build Plugins](https://bun.sh/docs/bundler#plugins) - generate the file whenever you run your build script (like an esbuild plugin).
+3) [Npx/Bunx] - just run the plugin directly with `bunx bun-plugin-env-types` and it will generate the file for you.
 
 ## Installation
 

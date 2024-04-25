@@ -8,9 +8,10 @@
 		"@types/bun": "^1.0.8"
 	},
 	"engines": {
-		"bun": ">=1.0.0",
+		"bun": ">=1.22.0",
 		"node": ">=21.0.0"
 	},
+
 	"esnext": "dist/index.js",
 	"exports": {
 		".": {
@@ -40,22 +41,30 @@
 		"type": "git",
 		"url": "https://github.com/gnosticdev/bun-plugin-env-types.git"
 	},
-	"files": [
-		"dist",
-		"package.json",
-		"README.md",
-		"tsconfig.json"
-	],
+	"bin": {
+		"bun-plugin-env-types": "./dist/bin/bin"
+	},
+	"files": ["dist", "package.json", "README.md", "tsconfig.json"],
+
 	"scripts": {
-		"build": "rm -rf ./dist && tsc",
-		"version": "echo v$(cat package.json | jq -r '.version')",
-		"publish:patch": "npm version patch && bun run build && npm publish",
-		"publish:minor": "npm version minor && bun run build && npm publish",
-		"publish:major": "npm version major && bun run build && npm publish",
+		"build": "rm -rf ./dist && tsc && bun build:binary",
+		"build:binary": "bun build ./src/bin.ts --compile --outfile ./dist/bin/bin",
+		"package-version": "echo v$(cat package.json | jq -r '.version')",
+		"prepublish": "bun lint && bun test && bun run build",
+		"publish:patch": "npm version patch && npm publish",
+		"publish:minor": "npm version minor && npm publish",
+		"publish:major": "npm version major && npm publish",
 		"lint": "biome lint . --apply",
 		"test:existing": "bun test existing --bail",
 		"test:plugin": "bun test plugin --bail",
-		"test:custom": "bun test custom"
+		"test:custom": "bun test custom",
+
+		"preversion": "git diff --exit-code && git diff --cached --exit-code",
+		"version": "git add -A && git commit -m \"chore(release): v`npm version --silent`\" && git tag -a v`npm version --silent` -m \"Version `npm version --silent`\"",
+		"postversion": "git push && git push --tags",
+		"prepublishOnly": "npm test",
+		"publish": "npm publish",
+		"postpublish": "echo \"Successfully published to npm.\""
 	},
 	"type": "module",
 	"types": "./dist/index.d.ts",

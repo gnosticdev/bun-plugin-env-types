@@ -74,79 +74,80 @@ type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
  * ```
  */
 export default function bunEnvPlugin(pluginOpts?: PluginOptions): BunPlugin {
-	const mergedOpts = mergeOptions(pluginOpts)
 	return {
 		name: 'bun-plugin-env-types',
-		setup: async () => {
-			const envGlob = new Bun.Glob(mergedOpts.glob)
-			const envFiles =
-				mergedOpts.envFiles ?? (await getEnvFiles(envGlob, mergedOpts.ignore))
+		setup: async () => generateEnvTypes(pluginOpts),
+	}
+}
 
-			mergedOpts.verbose &&
-				console.log({ options: { ...mergedOpts, envFiles } })
+export async function generateEnvTypes(pluginOpts?: PluginOptions) {
+	const mergedOpts = mergeOptions(pluginOpts)
+	const envGlob = new Bun.Glob(mergedOpts.glob)
+	const envFiles =
+		mergedOpts.envFiles ?? (await getEnvFiles(envGlob, mergedOpts.ignore))
 
-			if (envFiles.length === 0) {
-				mergedOpts.verbose &&
-					console.log(
-						'\x1b[38;5;222m No .env files found. Please add a .env file to the project, or provide the `envFiles` option to the plugin.\x1b[0m',
-					)
-				return
-			}
+	mergedOpts.verbose && console.log({ options: { ...mergedOpts, envFiles } })
 
-			// store the type definitions for each .env file
-			const newTypeDefs = new Map<string, string>()
+	if (envFiles.length === 0) {
+		mergedOpts.verbose &&
+			console.log(
+				'\x1b[38;5;222m No .env files found. Please add a .env file to the project, or provide the `envFiles` option to the plugin.\x1b[0m',
+			)
+		return
+	}
 
-			for await (const file of envFiles) {
-				const envContent = await Bun.file(file).text()
-				// filter out comments and empty lines
-				const filtered = envContent
-					.split('\n')
-					.filter((line) => line.trim() !== '' && !line.trim().startsWith('#'))
-				for (const line of filtered) {
-					const [key, value] = line.split('=')
-					if (!key || !value) continue
-					newTypeDefs.set(key.trim(), 'string')
-				}
-			}
+	// store the type definitions for each .env file
+	const newTypeDefs = new Map<string, string>()
 
-			if (newTypeDefs.size === 0) {
-				console.warn(
-					'no env variables found in .env files, with the given plugin options',
-				)
-			}
+	for await (const file of envFiles) {
+		const envContent = await Bun.file(file).text()
+		// filter out comments and empty lines
+		const filtered = envContent
+			.split('\n')
+			.filter((line) => line.trim() !== '' && !line.trim().startsWith('#'))
+		for (const line of filtered) {
+			const [key, value] = line.split('=')
+			if (!key || !value) continue
+			newTypeDefs.set(key.trim(), 'string')
+		}
+	}
 
-			mergedOpts.verbose && console.log({ $ENV: newTypeDefs })
+	if (newTypeDefs.size === 0) {
+		console.warn(
+			'no env variables found in .env files, with the given plugin options',
+		)
+	}
 
-			// our env.d.ts file is not 'created' until it is read at least once (lazily loaded)
-			const envDtsFile = Bun.file(mergedOpts.dtsFile)
+	mergedOpts.verbose && console.log({ $ENV: newTypeDefs })
 
-			// allow for modifying the output file - favor the existing type defs if they exist
-			const existingDtsContent =
-				(await envDtsFile
-					.text()
-					.catch(() => console.log('no env.d.ts file found'))) ?? null
+	// our env.d.ts file is not 'created' until it is read at least once (lazily loaded)
+	const envDtsFile = Bun.file(mergedOpts.dtsFile)
 
-			const existingTypeDefs = existingDtsContent
-				? getExistingTypeDefs(existingDtsContent, mergedOpts.verbose)
-				: new Map<string, string>()
+	// allow for modifying the output file - favor the existing type defs if they exist
+	const existingDtsContent =
+		(await envDtsFile
+			.text()
+			.catch(() => console.log('no env.d.ts file found'))) ?? null
 
-			if (existingTypeDefs.size > 0) {
-				for (const [key, value] of existingTypeDefs) {
-					newTypeDefs.set(key, value as string)
-				}
-			}
+	const existingTypeDefs = existingDtsContent
+		? getExistingTypeDefs(existingDtsContent, mergedOpts.verbose)
+		: new Map<string, string>()
 
-			mergedOpts.verbose && console.log({ typeDefinitions: newTypeDefs })
+	if (existingTypeDefs.size > 0) {
+		for (const [key, value] of existingTypeDefs) {
+			newTypeDefs.set(key, value as string)
+		}
+	}
 
-			const outFile = await createEnv({
-				typeDefs: newTypeDefs,
-				timestamp: mergedOpts.timestamp,
-				envDtsFile,
-			})
-			if (outFile && mergedOpts.verbose) {
-				console.log(`\x1b[38;5;226m${outFile.name} created\x1b[0m`)
-			}
-		},
+	mergedOpts.verbose && console.log({ typeDefinitions: newTypeDefs })
+
+	const outFile = await createEnv({
+		typeDefs: newTypeDefs,
+		timestamp: mergedOpts.timestamp,
+		envDtsFile,
+	})
+	if (outFile && mergedOpts.verbose) {
+		console.log(`\x1b[38;5;226m${outFile.name} created\x1b[0m`)
 	}
 }
 
