@@ -54,7 +54,7 @@
 		"build:binary": "bun build ./src/bin.ts --compile --outfile ./dist/bin/bin",
 		"prepublish": "bun lint && bun test && bun run build",
 		"package-version": "echo v$(cat package.json | jq -r '.version')",
-		"postpublish": "git add . && git commit -m 'chore: release $(bun run package-version)' && git push -f",
+		"postpublish": "git add . && git commit -m \"chore: release $(bun run package-version)\" && git push -f",
 		"publish:patch": "npm version patch && npm publish",
 		"publish:minor": "npm version minor && npm publish",
 		"publish:major": "npm version major && npm publish",
