@@ -58,11 +58,7 @@
 		"publish:minor": "npm version minor && npm publish",
 		"publish:major": "npm version major && npm publish",
 		"lint": "biome lint . --apply",
-		"test": "bun test",
-		"preversion": "git diff --exit-code && git diff --cached --exit-code",
-		"postversion": "git push && git push --tags",
-		"prepublishOnly": "npm test",
-		"publish": "npm publish"
+		"test": "bun test"
 	},
 	"type": "module",
 	"types": "./dist/index.d.ts",
