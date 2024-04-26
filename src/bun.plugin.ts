@@ -1,5 +1,5 @@
 import type { BunPlugin } from 'bun'
-import { createEnv, getEnvFiles } from './utils'
+import { getEnvFiles, writeToEnvDts } from './utils'
 
 export type PluginOptions = {
 	/**
@@ -34,6 +34,11 @@ export type PluginOptions = {
 	 * Verbose logs for debugging
 	 */
 	verbose?: boolean
+	/**
+	 * Put the definitions under ImportMetaEnv instead of NodeJS.ProcessEnv.
+	 * _Note:_ You probably dont need this in Bun environments where ImportMetaEnv is same as NodeJS.ProcessEnv
+	 */
+	importMetaEnv?: boolean
 }
 
 type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
@@ -42,7 +47,7 @@ type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
 /**
  * Generate type definitions for all .env files in the project.
  *
- * Scans the project for .env files using `Bun.glob`, then inserts them into a env.d.ts file under the `NodeJS.ProcessEnv` namespace.
+ * Scans the project for .env files using `Bun.glob`, then inserts them into a env.d.ts file under the `NodeJS.ProcessEnv` (or ImportMetaEnv) namespace.
  *
  * You can add your own custom global types to the env.d.ts file by adding them below the generated type dets.
  * @param pluginOpts - optional plugin configuration
@@ -80,6 +85,10 @@ export default function bunEnvPlugin(pluginOpts?: PluginOptions): BunPlugin {
 	}
 }
 
+/**
+ * Generate type definitions for all .env files in the project.
+ * @param pluginOpts - optional plugin configuration
+ */
 export async function generateEnvTypes(pluginOpts?: PluginOptions) {
 	const mergedOpts = mergeOptions(pluginOpts)
 	const envGlob = new Bun.Glob(mergedOpts.glob)
@@ -127,7 +136,9 @@ export async function generateEnvTypes(pluginOpts?: PluginOptions) {
 	const existingDtsContent =
 		(await envDtsFile
 			.text()
-			.catch(() => console.log('no env.d.ts file found'))) ?? null
+			.catch(() =>
+				console.log('no existing env.d.ts... generating a new one'),
+			)) ?? null
 
 	const existingTypeDefs = existingDtsContent
 		? getExistingTypeDefs(existingDtsContent, mergedOpts.verbose)
@@ -141,16 +152,21 @@ export async function generateEnvTypes(pluginOpts?: PluginOptions) {
 
 	mergedOpts.verbose && console.log({ typeDefinitions: newTypeDefs })
 
-	const outFile = await createEnv({
+	const outFile = await writeToEnvDts({
 		typeDefs: newTypeDefs,
 		timestamp: mergedOpts.timestamp,
 		envDtsFile,
+		importMetaEnv: mergedOpts.importMetaEnv,
 	})
 	if (outFile && mergedOpts.verbose) {
 		console.log(`\x1b[38;5;226m${outFile.name} created\x1b[0m`)
 	}
 }
 
+/**
+ * Merge the plugin options with the default options
+ * @param pluginOpts
+ */
 function mergeOptions(pluginOpts: PluginOptions | undefined) {
 	const defaults: FullOptions = {
 		dtsFile: 'env.d.ts',
@@ -159,6 +175,7 @@ function mergeOptions(pluginOpts: PluginOptions | undefined) {
 		ignore: ['.env.example'],
 		envFiles: undefined,
 		verbose: false,
+		importMetaEnv: false,
 	}
 	// just in case the user provides an option that is undefined
 	const filteredOptions: PluginOptions = pluginOpts
@@ -173,12 +190,16 @@ function mergeOptions(pluginOpts: PluginOptions | undefined) {
 	return mergedOpts
 }
 
+/**
+ * Get the existing type definitions from the contents of the env.d.ts file
+ * @param content - the file contents of the env.d.ts file as a string
+ * @param verbose - verbose logging
+ */
 function getExistingTypeDefs(
 	content: string,
 	verbose = false,
 ): Map<string, string> {
 	try {
-		const typeDefs = new Map<string, string>()
 		const processEnvString = 'export interface ProcessEnv {'
 		const processEnvStart = content.indexOf(processEnvString)
 		const processEnvEnd = content.indexOf('}', processEnvStart)
@@ -187,19 +208,20 @@ function getExistingTypeDefs(
 			processEnvEnd,
 		)
 
+		const typeDefinitions = new Map<string, string>()
 		// Split the content by new lines and filter out empty lines or comments
 		for (const line of processEnvContent.split('\n')) {
 			const trimmedLine = line.trim()
 			if (trimmedLine && !trimmedLine.startsWith('//')) {
 				const [key, value] = trimmedLine.split(':')
 				if (!key || !value) continue
-				typeDefs.set(key.trim(), value.trim())
+				typeDefinitions.set(key.trim(), value.trim())
 			}
 		}
 
-		verbose && console.log({ existingTypeDefs: typeDefs })
+		verbose && console.log({ existingTypeDefs: typeDefinitions })
 
-		return typeDefs
+		return typeDefinitions
 	} catch (error) {
 		console.error('Error reading existing type definitions:', error)
 		return new Map()

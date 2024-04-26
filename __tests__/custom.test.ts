@@ -32,6 +32,7 @@ describe('custom options', async () => {
 			ignore: [envTestIgnore.filePath, envTestExample.filePath],
 			timestamp: false,
 			verbose: true,
+			importMetaEnv: true,
 		} satisfies FullOptions
 
 		await using tempDir = await TempBunDir.create(TEMP_DIR)
@@ -72,5 +73,10 @@ describe('custom options', async () => {
 
 	test('glob should only include .env.test', async () => {
 		expect(envFiles).toHaveLength(1)
+	})
+
+	test('should add ImportMetaEnv', async () => {
+		const contents = await Bun.file(customOptions.dtsFile).text()
+		expect(contents).toInclude('interface ImportMetaEnv')
 	})
 })
