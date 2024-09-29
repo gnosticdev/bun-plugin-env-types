@@ -1,4 +1,4 @@
-import bunEnvPlugin from './src/bun.plugin'
+import bunEnvPlugin from './src/plugin'
 
 Bun.plugin(
 	bunEnvPlugin({

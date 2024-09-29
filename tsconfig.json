@@ -1,24 +1,24 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "moduleDetection": "force",
-        "lib": ["ESNext"],
-        "strict": true,
-        "skipLibCheck": true,
-        "isolatedModules": true,
-        "resolveJsonModule": true,
-        "allowSyntheticDefaultImports": true,
-        "allowJs": true,
-        "strictNullChecks": true,
-        "noUncheckedIndexedAccess": true,
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "verbatimModuleSyntax": true,
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"moduleDetection": "force",
+		"lib": ["ESNext"],
+		"strict": true,
+		"skipLibCheck": true,
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+		"allowJs": true,
+		"strictNullChecks": true,
+		"noUncheckedIndexedAccess": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"verbatimModuleSyntax": true,
 
-        "outDir": "dist",
-        "declaration": true
-    },
-    "include": ["src/**/*", "index.ts", "dist/**/*"]
+		"outDir": "dist",
+		"declaration": true
+	},
+	"include": ["src/**/*", "index.ts", "dist/**/*"]
 }

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import envPlugin from '../src/bun.plugin'
-import { TempBunDir, TempBunFile, type ShellFile } from './utils'
+import envPlugin from '../src/plugin'
+import { type ShellFile, TempBunDir, TempBunFile } from './utils'
 
 describe('default plugin options', async () => {
 	const DTS_FILE = 'env.d.ts'

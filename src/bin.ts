@@ -1,4 +1,4 @@
-import { generateEnvTypes } from './bun.plugin'
+import { generateEnvTypes } from './plugin'
 
 console.log('generating types from all .env files in the project...')
 await generateEnvTypes()

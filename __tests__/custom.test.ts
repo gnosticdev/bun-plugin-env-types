@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import envPlugin, { type PluginOptions } from '../src/bun.plugin'
+import envPlugin, { type PluginOptions } from '../src/plugin'
 import { getEnvFiles } from '../src/utils'
 import { TempBunDir, TempBunFile } from './utils'
 
-export type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
+type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
 	Pick<PluginOptions, 'envFiles'>
 
 describe('custom options', async () => {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import envPlugin from '../src/bun.plugin'
+import envPlugin from '../src/plugin'
 import { TempBunDir, TempBunFile } from './utils'
 
 describe('keep the .env.d.ts file modifications', async () => {

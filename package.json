@@ -5,6 +5,7 @@
 	},
 	"description": "A Bun plugin for generating typescript types for environment variables",
 	"devDependencies": {
+		"@biomejs/biome": "^1.9.2",
 		"@types/bun": "^1.0.8"
 	},
 	"engines": {
@@ -20,15 +21,7 @@
 			"types": "./dist/index.d.ts"
 		}
 	},
-	"keywords": [
-		"bun",
-		"plugin",
-		"env",
-		"types",
-		"typescript",
-		"type-safe",
-		"environment variables"
-	],
+	"keywords": ["bun plugin", "env types", "type safe", "environment variables"],
 	"license": "MIT",
 	"main": "./dist/index.js",
 	"name": "bun-plugin-env-types",
@@ -43,12 +36,7 @@
 	"bin": {
 		"bun-plugin-env-types": "./dist/bin/bin"
 	},
-	"files": [
-		"dist",
-		"package.json",
-		"README.md",
-		"tsconfig.json"
-	],
+	"files": ["dist", "package.json", "README.md", "tsconfig.json"],
 	"scripts": {
 		"build": "rm -rf ./dist && tsc && bun build:binary",
 		"build:binary": "bun build ./src/bin.ts --compile --outfile ./dist/bin/bin",
@@ -58,11 +46,12 @@
 		"publish:patch": "npm version patch && npm publish",
 		"publish:minor": "npm version minor && npm publish",
 		"publish:major": "npm version major && npm publish",
-		"lint": "biome lint . --apply",
+		"lint": "biome check . --write --unsafe",
 		"test": "bun test",
 		"preversion": "git diff --exit-code && git diff --cached --exit-code"
 	},
 	"type": "module",
 	"types": "./dist/index.d.ts",
-	"version": "1.5.0"
+	"version": "1.5.0",
+	"trustedDependencies": ["@biomejs/biome"]
 }

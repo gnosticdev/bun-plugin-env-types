@@ -35,8 +35,8 @@ export type PluginOptions = {
 	 */
 	verbose?: boolean
 	/**
-	 * Put the definitions under ImportMetaEnv instead of NodeJS.ProcessEnv.
-	 * _Note:_ You probably dont need this in Bun environments where ImportMetaEnv is same as NodeJS.ProcessEnv
+	 * Put the definitions under `ImportMetaEnv` instead of `NodeJS.ProcessEnv`.
+	 * _Note:_ You probably dont need this in Bun environments where `ImportMetaEnv` is same as `NodeJS.ProcessEnv`
 	 */
 	importMetaEnv?: boolean
 }
@@ -47,7 +47,7 @@ type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
 /**
  * Generate type definitions for all .env files in the project.
  *
- * Scans the project for .env files using `Bun.glob`, then inserts them into a env.d.ts file under the `NodeJS.ProcessEnv` (or ImportMetaEnv) namespace.
+ * Scans the project for .env files using `Bun.glob`, then inserts them into a env.d.ts file under the `NodeJS.ProcessEnv` (or `ImportMetaEnv`) namespace.
  *
  * You can add your own custom global types to the env.d.ts file by adding them below the generated type dets.
  * @param pluginOpts - optional plugin configuration

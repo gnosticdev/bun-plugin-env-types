@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { TempBunFile, type ShellFile } from './utils'
+import { type ShellFile, TempBunFile } from './utils'
 
 describe('binary executable version', async () => {
 	const DTS_FILE = 'env.d.ts'
