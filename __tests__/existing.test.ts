@@ -40,7 +40,7 @@ describe('uses existing env.d.ts types', async () => {
 		console.log({ entry })
 		const out = await Bun.build({
 			entrypoints: [entry.filePath!],
-			plugins: [envPlugin({ verbose: true, dtsFile: DTS_FILE })],
+			plugins: [envPlugin({ verbose: true, outFile: DTS_FILE })],
 			outdir: tempDir.path,
 		})
 		success = out.success

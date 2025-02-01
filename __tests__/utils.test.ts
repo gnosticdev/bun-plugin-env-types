@@ -24,7 +24,7 @@ describe('temp dir', async () => {
 		})
 		const builder = await Bun.build({
 			entrypoints: [tempFile.filePath!],
-			plugins: [envPlugin({ verbose: true, dtsFile: DTS_FILE })],
+			plugins: [envPlugin({ verbose: true, outFile: DTS_FILE })],
 			outdir: tempDir.path,
 		})
 

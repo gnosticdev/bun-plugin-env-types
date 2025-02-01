@@ -6,7 +6,9 @@
 	"description": "A Bun plugin for generating typescript types for environment variables",
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.2",
-		"@types/bun": "^1.0.8"
+		"@types/bun": "^1.0.8",
+		"tsup": "^8.3.6",
+		"typescript": "^5.7.3"
 	},
 	"engines": {
 		"bun": ">=1.22.0",
@@ -15,15 +17,14 @@
 	"esnext": "dist/index.js",
 	"exports": {
 		".": {
-			"default": "./dist/index.js",
-			"import": "./dist/index.js",
-			"require": "./dist/index.js",
-			"types": "./dist/index.d.ts"
+			"import": "./dist/plugin.js",
+			"require": "./dist/plugin.js",
+			"types": "./dist/plugin.d.ts"
 		}
 	},
 	"keywords": ["bun plugin", "env types", "type safe", "environment variables"],
 	"license": "MIT",
-	"main": "./dist/index.js",
+	"main": "./dist/plugin.js",
 	"name": "bun-plugin-env-types",
 	"peerDependencies": {
 		"bun": "^1.0.0"
@@ -34,13 +35,14 @@
 		"url": "https://github.com/gnosticdev/bun-plugin-env-types.git"
 	},
 	"bin": {
-		"bun-plugin-env-types": "./dist/bin/bin"
+		"bun-plugin-env-types": "./dist/bin"
 	},
 	"files": ["dist", "package.json", "README.md", "tsconfig.json"],
 	"scripts": {
-		"build": "rm -rf ./dist && tsc && bun build:binary",
-		"build:binary": "bun build ./src/bin.ts --compile --outfile ./dist/bin/bin",
-		"prepublish": "bun lint && bun test && bun run build",
+		"build": "tsup && bun run build:binary",
+		"build:binary": "bun build ./src/bin.ts --compile --outfile ./dist/bin",
+		"dev": "tsup --watch",
+		"prepublish": "bun lint && bun test && bun run build && bun run build:binary",
 		"package-version": "echo v$(cat package.json | jq -r '.version')",
 		"postpublish": "git add . && git commit --allow-empty -m \"chore: release $(bun run package-version)\" && git push",
 		"publish:patch": "npm version patch && npm publish",
@@ -51,7 +53,7 @@
 		"preversion": "git diff --exit-code && git diff --cached --exit-code"
 	},
 	"type": "module",
-	"types": "./dist/index.d.ts",
+	"types": "./dist/plugin.d.ts",
 	"version": "1.5.0",
 	"trustedDependencies": ["@biomejs/biome"]
 }

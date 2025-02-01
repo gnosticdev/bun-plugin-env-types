@@ -25,7 +25,7 @@ describe('default plugin options', async () => {
 		console.log({ tempEntry: tempEntry })
 		const builder = await Bun.build({
 			entrypoints: [tempEntry.filePath],
-			plugins: [envPlugin({ verbose: true, dtsFile: DTS_FILE })], // will produce env.d.ts
+			plugins: [envPlugin({ verbose: true, outFile: DTS_FILE })], // will produce env.d.ts
 			outdir: tempDir.path,
 		})
 		success = builder.success

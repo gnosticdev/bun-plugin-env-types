@@ -13,7 +13,7 @@ describe('binary executable version', async () => {
 			filePath: '.env.example',
 			contents: 'EXAMPLE_VAR=example',
 		})
-		const binaryOutput = await Bun.$`./dist/bin/bin`
+		const binaryOutput = await Bun.$`./dist/bin`
 		if (binaryOutput.exitCode !== 0) {
 			throw new Error(binaryOutput.stderr.toString())
 		}

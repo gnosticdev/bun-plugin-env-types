@@ -10,10 +10,10 @@ export type PluginOptions = {
 	 */
 	envFiles?: string[]
 	/**
-	 * Change the name of the generated d.ts file
+	 * Change the name of the generated output ts/d.ts file
 	 * @default 'env.d.ts'
 	 */
-	dtsFile?: string
+	outFile?: string
 	/**
 	 * The glob pattern to search for .env files
 	 * @default '.env*'
@@ -78,7 +78,7 @@ type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &
  * })
  * ```
  */
-export default function bunEnvPlugin(pluginOpts?: PluginOptions): BunPlugin {
+export default function (pluginOpts?: PluginOptions): BunPlugin {
 	return {
 		name: 'bun-plugin-env-types',
 		setup: async () => generateEnvTypes(pluginOpts),
@@ -117,7 +117,9 @@ export async function generateEnvTypes(pluginOpts?: PluginOptions) {
 		for (const line of filtered) {
 			const [key, value] = line.split('=')
 			if (!key || !value) continue
-			newTypeDefs.set(key.trim(), 'string')
+			// Remove 'export' keyword if present and trim whitespace
+			const cleanKey = key.trim().replace(/^export\s+/, '')
+			newTypeDefs.set(cleanKey, 'string')
 		}
 	}
 
@@ -130,7 +132,7 @@ export async function generateEnvTypes(pluginOpts?: PluginOptions) {
 	mergedOpts.verbose && console.log({ $ENV: newTypeDefs })
 
 	// our env.d.ts file is not 'created' until it is read at least once (lazily loaded)
-	const envDtsFile = Bun.file(mergedOpts.dtsFile)
+	const envDtsFile = Bun.file(mergedOpts.outFile)
 
 	// allow for modifying the output file - favor the existing type defs if they exist
 	const existingDtsContent =
@@ -167,9 +169,9 @@ export async function generateEnvTypes(pluginOpts?: PluginOptions) {
  * Merge the plugin options with the default options
  * @param pluginOpts
  */
-function mergeOptions(pluginOpts: PluginOptions | undefined) {
+function mergeOptions(pluginOpts: PluginOptions | undefined): FullOptions {
 	const defaults: FullOptions = {
-		dtsFile: 'env.d.ts',
+		outFile: 'env.d.ts',
 		glob: '.env*',
 		timestamp: true,
 		ignore: ['.env.example'],
@@ -178,7 +180,7 @@ function mergeOptions(pluginOpts: PluginOptions | undefined) {
 		importMetaEnv: false,
 	}
 	// just in case the user provides an option that is undefined
-	const filteredOptions: PluginOptions = pluginOpts
+	const definedOptions: PluginOptions = pluginOpts
 		? Object.fromEntries(
 				Object.entries(pluginOpts).map(([key, value]) => [
 					key,
@@ -186,7 +188,7 @@ function mergeOptions(pluginOpts: PluginOptions | undefined) {
 				]),
 			)
 		: defaults
-	const mergedOpts = { ...defaults, ...filteredOptions } as FullOptions
+	const mergedOpts = { ...defaults, ...definedOptions } satisfies FullOptions
 	return mergedOpts
 }
 
