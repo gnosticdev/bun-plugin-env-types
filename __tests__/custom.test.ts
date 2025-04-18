@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import envPlugin, { type PluginOptions } from '../src/plugin'
-import { getEnvFiles } from '../src/utils'
+import { getEnvFiles } from '../src/plugin-utils'
 import { TempBunDir, TempBunFile } from './utils'
 
 type FullOptions = Required<Omit<PluginOptions, 'envFiles'>> &

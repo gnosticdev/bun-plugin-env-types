@@ -1,5 +1,5 @@
 import type { BunPlugin } from 'bun'
-import { getEnvFiles, writeToEnvDts } from './utils'
+import { getEnvFiles, writeToEnvDts } from './plugin-utils'
 
 export type PluginOptions = {
 	/**

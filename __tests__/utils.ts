@@ -1,5 +1,3 @@
-import type { BunFile } from 'bun'
-
 export type ShellFile = { filePath: string; text: string; exists: boolean }
 
 export const redLog = (message: string) => `\x1b[38;5;199m${message}\x1b[0m`
@@ -48,16 +46,6 @@ export class TempBunDir implements AsyncDisposable {
 		await Bun.$`mkdir -p ${dirPath}`.quiet()
 		return new TempBunDir(dirPath)
 	}
-}
-
-type TempFile = {
-	path: string
-	file: BunFile
-}
-
-type TempFileCreate = {
-	path: string
-	contents?: string
 }
 
 export class TempBunFile<
