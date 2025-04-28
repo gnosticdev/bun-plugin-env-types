@@ -27,8 +27,32 @@ import { getEnvFiles } from './plugin-utils'
  * ```
  */
 
+/**
+ * Prints the help menu for the CLI and exits the process.
+ */
+function printHelpAndExit() {
+	console.log(
+		'\x1b[36m\nUsage:\x1b[0m\n' +
+			'  bunx bun-plugin-env-types [options] [file]\n\n' +
+			'\x1b[36mOptions:\x1b[0m\n' +
+			'  --env <environment>   Use a specific environment file\n' +
+			'  --outfile <file>     Output file name (default: env.d.ts)\n' +
+			'  --overwrite          Automatically overwrite existing files without prompting\n' +
+			'  --help               Show this help menu\n\n' +
+			'\x1b[36mExamples:\x1b[0m\n' +
+			'  bunx bun-plugin-env-types --env production\n' +
+			'  bunx bun-plugin-env-types --outfile vite.d.ts --env development\n' +
+			'  bunx bun-plugin-env-types --overwrite --env local\n',
+	)
+	process.exit(0)
+}
+
 // Parse command line arguments
 const args = process.argv.slice(2)
+// Show help menu if --help is present
+if (args.includes('--help')) {
+	printHelpAndExit()
+}
 let outfile = 'env.d.ts'
 let envFilter: string | undefined
 let overwrite = false

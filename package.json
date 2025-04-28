@@ -17,9 +17,9 @@
 	"esnext": "dist/index.js",
 	"exports": {
 		".": {
-			"import": "./dist/plugin.js",
+			"types": "./dist/plugin.d.ts",
 			"require": "./dist/plugin.js",
-			"types": "./dist/plugin.d.ts"
+			"import": "./dist/plugin.js"
 		}
 	},
 	"keywords": [
