@@ -82,3 +82,10 @@ export const MOD_LINE = `
 //-----------------------ADD YOUR CODE BELOW---------------------------//
 //---------------------------------------------------------------------//
 `
+
+type ParsedArgs = {
+	env: string
+	outfile: string
+	overwrite: boolean
+	verbose: boolean
+}

@@ -91,3 +91,22 @@ declare namespace NodeJS {
 
 - You can modify the generated d.ts file and your changes will not be overwritten.
 - You can access your environment variables via `process.env`, `Bun.env`, or `import.meta.env` with autocomplete.
+
+### Npx/Bunx
+
+You can also run the plugin directly with `bunx bun-plugin-env-types` and it will generate the file for you.
+
+```bash
+# Generate type definitions for all .env files
+bunx bun-plugin-env-types
+
+# Generate type definitions for a specific environment
+bunx bun-plugin-env-types --env production
+
+# Generate type definitions for a specific environment with custom output file
+bunx bun-plugin-env-types custom-env.d.ts --env development
+```
+
+The `--env` flag can be used with any environment name that corresponds to a matching `.env.[environment]` file in your project.
+
+This allows you to generate type definitions for any specific environment rather than merging all environment variables from different .env files.

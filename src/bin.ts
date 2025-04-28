@@ -3,26 +3,94 @@ import * as readline from 'node:readline'
 import { generateEnvTypes } from './plugin'
 import { getEnvFiles } from './plugin-utils'
 
+/**
+ * CLI for the bun-plugin-env-types plugin.
+ *
+ * Usage:
+ *
+ * ```sh
+ * bunx bun-plugin-env-types [options] [file]
+ * ```
+ *
+ * Options:
+ *
+ * - `--env <environment>`: Use a specific environment file.
+ * - `--outfile <file>`: Output file name.
+ * - `--overwrite`: Automatically overwrite existing files without prompting.
+ *
+ * Examples:
+ *
+ * ```sh
+ * bunx bun-plugin-env-types --env production
+ * bunx bun-plugin-env-types --outfile vite.d.ts --env development
+ * bunx bun-plugin-env-types --overwrite --env local
+ * ```
+ */
+
+// Parse command line arguments
+const args = process.argv.slice(2)
+let outfile = 'env.d.ts'
+let envFilter: string | undefined
+let overwrite = false
+
+console.log({ args })
+
+// Parse arguments, grouping env flag with its value
+for (let i = 0; i < args.length; i++) {
+	const arg = args[i]
+	// checks the flag and its value
+	if (arg === '--env' && i + 1 < args.length) {
+		const nextArg = args[i + 1]
+		if (nextArg) {
+			envFilter = nextArg
+			i++ // Skip the next argument as it's the value for --env
+		}
+	} else if (arg === '--overwrite') {
+		overwrite = true
+	} else if (arg === '--outfile' && i + 1 < args.length) {
+		// Handle --outfile flag followed by filename
+		const nextArg = args[i + 1]
+		if (nextArg && !nextArg.startsWith('--')) {
+			outfile = nextArg
+			i++ // Skip the next argument as it's the value for --outfile
+		}
+	} else if (arg && !arg.startsWith('--')) {
+		// If no prefix, treat as outfile (backward compatibility)
+		outfile = arg
+	}
+}
+
 console.log('\x1b[34mchecking if env.d.ts file exists...\x1b[0m')
 
-const envFiles = await getEnvFiles(new Bun.Glob('.env*'), ['.env.example'])
+// Get env files
+const envGlob = new Bun.Glob('.env*')
+let envFiles = await getEnvFiles(envGlob, ['.env.example'])
+
+// Filter env files if environment flag is provided
+if (envFilter) {
+	envFiles = envFiles.filter((file) => file === `.env.${envFilter}`)
+}
+
 if (envFiles.length === 0) {
-	console.log('\x1b[31mno .env files found\x1b[0m')
+	let logMessage = '\x1b[31mno .env files found\x1b[0m'
+	if (envFilter) {
+		logMessage = `\x1b[31mno .env.${envFilter} files found\x1b[0m`
+	}
+	console.log(logMessage)
 	process.exit(1)
 }
 
-let outfile = process.argv[2] || 'env.d.ts'
 const existingDtsFile = Bun.file(outfile)
 const fileExists = await existingDtsFile.exists()
 
-if (fileExists) {
+if (fileExists && !overwrite) {
 	const answer = await new Promise<string>((resolve) => {
 		readline
 			.createInterface({
 				input: stdin,
 				output: stdout,
 			})
-			.question(`${outfile} already exists, overwrite? (y/n)`, resolve)
+			.question(`${outfile} already exists, overwrite? (y/n) `, resolve)
 	})
 
 	if (answer.trim().toLowerCase() !== 'y') {
@@ -32,6 +100,10 @@ if (fileExists) {
 	} else {
 		console.log('\x1b[33moverwriting env.d.ts file...\x1b[0m')
 	}
+} else if (fileExists && overwrite) {
+	console.log(
+		`\x1b[33moverwriting ${outfile} file (--overwrite flag detected)...\x1b[0m`,
+	)
 }
 
 await generateEnvTypes({ envFiles, outFile: outfile })

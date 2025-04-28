@@ -12,7 +12,11 @@ declare namespace NodeJS {
 
 describe('uses existing env.d.ts types', async () => {
 	const DTS_FILE = 'env.d.ts'
-	let existingEnvBunFile: TempBunFile<typeof DTS_FILE, undefined, 'text'>
+	let existingEnvBunFile: TempBunFile<
+		typeof DTS_FILE,
+		object | undefined,
+		'text'
+	>
 	let success = true
 	let entry: ShellFile
 	beforeEach(async () => {
