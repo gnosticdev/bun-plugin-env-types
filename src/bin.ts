@@ -53,8 +53,12 @@ function printHelpAndExit() {
 
 // Parse command line arguments
 const args = process.argv.slice(2)
-// if the only argument passed in is not a .d.ts file, show help menu
-if (args.length === 1 && !args[0]?.endsWith('.d.ts')) {
+// if the only argument passed in is not a .d.ts file and doesn't start with --, show help menu
+if (
+	args.length === 1 &&
+	!args[0]?.endsWith('.d.ts') &&
+	!args[0]?.startsWith('--')
+) {
 	printHelpAndExit()
 }
 
@@ -93,6 +97,9 @@ for (let i = 0; i < args.length; i++) {
 	} else if (arg && !arg.startsWith('--')) {
 		// If no prefix, treat as outfile (backward compatibility)
 		outfile = arg
+	} else if (arg?.startsWith('--')) {
+		// Unknown flag, show help
+		printHelpAndExit()
 	}
 }
 
@@ -144,7 +151,7 @@ if (fileExists && !overwrite) {
 
 await generateEnvTypes({ envFiles, outFile: outfile, importMetaEnv })
 console.log(
-	`\x1b[34mtypes generated successfully!\x1b[0m\n\x1b[32m${outfile}\x1b[0m`,
+	`\x1b[34mtypes generated successfully!\x1b[0m\n\x1b[32mfile: ${outfile}\x1b[0m`,
 )
 
 process.exit(0)
