@@ -17,6 +17,7 @@ import { getEnvFiles } from './plugin-utils'
  * - `--env <environment>`: Use a specific environment file.
  * - `--outfile <file>`: Output file name.
  * - `--overwrite`: Automatically overwrite existing files without prompting.
+ * - `--import-meta-env`: Put definitions under `ImportMetaEnv` instead of `NodeJS.ProcessEnv`.
  *
  * Examples:
  *
@@ -24,6 +25,7 @@ import { getEnvFiles } from './plugin-utils'
  * bunx bun-plugin-env-types --env production
  * bunx bun-plugin-env-types --outfile vite.d.ts --env development
  * bunx bun-plugin-env-types --overwrite --env local
+ * bunx bun-plugin-env-types --import-meta-env --outfile vite-env.d.ts
  * ```
  */
 
@@ -38,11 +40,13 @@ function printHelpAndExit() {
 			'  --env <environment>   Use a specific environment file\n' +
 			'  --outfile <file>     Output file name (default: env.d.ts)\n' +
 			'  --overwrite          Automatically overwrite existing files without prompting\n' +
+			'  --import-meta-env    Put definitions under ImportMetaEnv instead of NodeJS.ProcessEnv\n' +
 			'  --help               Show this help menu\n\n' +
 			'\x1b[36mExamples:\x1b[0m\n' +
 			'  bunx bun-plugin-env-types --env production\n' +
 			'  bunx bun-plugin-env-types --outfile vite.d.ts --env development\n' +
-			'  bunx bun-plugin-env-types --overwrite --env local\n',
+			'  bunx bun-plugin-env-types --overwrite --env local\n' +
+			'  bunx bun-plugin-env-types --import-meta-env --outfile vite-env.d.ts\n',
 	)
 	process.exit(0)
 }
@@ -56,6 +60,7 @@ if (args.includes('--help')) {
 let outfile = 'env.d.ts'
 let envFilter: string | undefined
 let overwrite = false
+let importMetaEnv = false
 
 console.log({ args })
 
@@ -71,6 +76,8 @@ for (let i = 0; i < args.length; i++) {
 		}
 	} else if (arg === '--overwrite') {
 		overwrite = true
+	} else if (arg === '--import-meta-env') {
+		importMetaEnv = true
 	} else if (arg === '--outfile' && i + 1 < args.length) {
 		// Handle --outfile flag followed by filename
 		const nextArg = args[i + 1]
@@ -130,7 +137,7 @@ if (fileExists && !overwrite) {
 	)
 }
 
-await generateEnvTypes({ envFiles, outFile: outfile })
+await generateEnvTypes({ envFiles, outFile: outfile, importMetaEnv })
 console.log(
 	`\x1b[34mtypes generated successfully!\x1b[0m\n\x1b[32m${outfile}\x1b[0m`,
 )
