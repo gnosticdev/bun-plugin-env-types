@@ -53,6 +53,11 @@ function printHelpAndExit() {
 
 // Parse command line arguments
 const args = process.argv.slice(2)
+// if the only argument passed in is not a .d.ts file, show help menu
+if (args.length === 1 && !args[0]?.endsWith('.d.ts')) {
+	printHelpAndExit()
+}
+
 // Show help menu if --help is present
 if (args.includes('--help') || args.includes('-h')) {
 	printHelpAndExit()
