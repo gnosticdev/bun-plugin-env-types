@@ -54,7 +54,7 @@ function printHelpAndExit() {
 // Parse command line arguments
 const args = process.argv.slice(2)
 // Show help menu if --help is present
-if (args.includes('--help')) {
+if (args.includes('--help') || args.includes('-h')) {
 	printHelpAndExit()
 }
 let outfile = 'env.d.ts'
