@@ -53,11 +53,11 @@ function printHelpAndExit() {
 
 // Parse command line arguments
 const args = process.argv.slice(2)
-// if the only argument passed in is not a .d.ts file and doesn't start with --, show help menu
+// if the only argument passed in is not a .d.ts file and doesn't start with -, show help menu
 if (
 	args.length === 1 &&
 	!args[0]?.endsWith('.d.ts') &&
-	!args[0]?.startsWith('--')
+	!args[0]?.startsWith('-')
 ) {
 	printHelpAndExit()
 }
@@ -94,10 +94,10 @@ for (let i = 0; i < args.length; i++) {
 			outfile = nextArg
 			i++ // Skip the next argument as it's the value for --outfile
 		}
-	} else if (arg && !arg.startsWith('--')) {
+	} else if (arg && !arg.startsWith('-')) {
 		// If no prefix, treat as outfile (backward compatibility)
 		outfile = arg
-	} else if (arg?.startsWith('--')) {
+	} else if (arg?.startsWith('-')) {
 		// Unknown flag, show help
 		printHelpAndExit()
 	}
