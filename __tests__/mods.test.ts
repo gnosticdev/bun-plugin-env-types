@@ -48,7 +48,7 @@ describe('keep the .env.d.ts file modifications', async () => {
 	})
 
 	afterEach(async () => {
-		await Bun.$`rm ${DTS_PATH}`
+		await Bun.$`rm ${DTS_PATH}`.quiet().nothrow()
 	})
 
 	it('should not ignore the env.test.example file', async () => {

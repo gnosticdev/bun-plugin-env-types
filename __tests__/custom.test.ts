@@ -16,6 +16,7 @@ describe('custom options', async () => {
 			filePath: '.env.test.ignore',
 			contents: 'IGNORED_VAR=ignored',
 		})
+
 		await using envTestExample = await TempBunFile.create({
 			filePath: '.env.test.example',
 			contents: 'EXAMPLE_VAR=example',
@@ -53,7 +54,9 @@ describe('custom options', async () => {
 	})
 
 	afterEach(async () => {
-		await Bun.$`rm ${customOptions.outFile}`.quiet()
+		if (customOptions?.outFile) {
+			await Bun.$`rm ${customOptions.outFile}`.quiet().nothrow()
+		}
 	})
 
 	test('should build the env.alt.d.ts file', async () => {
