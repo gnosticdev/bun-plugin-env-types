@@ -84,3 +84,19 @@ describe('use the shellFile', async () => {
 	})
 	test('should get deleted', async () => {})
 })
+
+test('TempBunFile.create > should throw if file already exists', async () => {
+	// Create a file first
+	await using tempFile = await TempBunFile.create({
+		filePath: 'test-file.txt',
+		contents: 'test content',
+	})
+
+	// Try to create the same file again - should throw
+	await expect(
+		TempBunFile.create({
+			filePath: 'test-file.txt',
+			contents: 'different content',
+		}),
+	).rejects.toThrow('File already exists: test-file.txt')
+})

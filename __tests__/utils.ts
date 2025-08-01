@@ -145,10 +145,7 @@ export class TempBunFile<
 
 	/**
 	 * Creates a temporary file in the current directory.
-	 * If the file already exists, it will be removed first to avoid conflicts.
-	 * @param filePath - The path where the temporary file should be created
-	 * @param contents - The contents of the file (string for text files, object for JSON files)
-	 * @returns A new TempBunFile instance
+	 * @throws if file already exists
 	 */
 	public static async create<
 		TFilePath extends `${string}.${string}`,
@@ -161,10 +158,10 @@ export class TempBunFile<
 	}: TFilePath extends `${string}.json`
 		? { filePath: TFilePath; contents: object }
 		: { filePath: TFilePath; contents: string }) {
-		// Remove file if it exists to avoid conflicts
+		// throw if file exists
 		const exitCode = (await Bun.$`ls ${filePath}`.quiet().nothrow()).exitCode
 		if (exitCode === 0) {
-			await Bun.$`rm ${filePath}`.quiet()
+			throw new Error(`File already exists: ${filePath}`)
 		}
 		const text: string =
 			typeof contents === 'string' ? contents : JSON.stringify(contents)
